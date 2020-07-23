@@ -1,0 +1,6 @@
+@=
+projectType="library";
+projectName="delaunay";
+projectGUID="334B280C-CEFC-461e-BB1E-BE50FC399C7E";
+excludeSourceFiles=["mesh_geometry.cxx","triangle_mesh.cxx","delaunay_mesh.cxx","delaunay_mesh_with_hierarchy.cxx"];
+addSharedDefines=["DELAUNAY_EXPORTS"];

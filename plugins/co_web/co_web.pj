@@ -1,0 +1,8 @@
+@=
+projectType="plugin";
+projectName="co_web";
+projectGUID="E4A43954-D61F-4c2d-81B0-9230523FA9E1";
+addProjectDirs=[CGV_DIR."/3rd/webserver"];
+addProjectDeps=["cgv_os","webserver"];
+addSharedDefines=["CGV_OS_WEB_EXPORTS"];
+

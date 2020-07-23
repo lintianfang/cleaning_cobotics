@@ -1,0 +1,29 @@
+type(base_provider_test)
+{
+	decorator("Base Provider Test", heading, "level=1");
+	tree_node("line config", false, 2) {
+		control(count,nr_lines,value_slider,"min=10;max=200;log=true;ticks=true");
+		control(width,line_width,value_slider,"min=1;max=20;log=true;ticks=true");
+		control(color,line_color);
+	}
+	tree_node("rest", true, 2) {
+		control(layout aspect,layout_aspect,value_slider,"min=0.1;max=2;ticks=true");
+		view(some text,some_text);
+	}
+}
+
+name(named_provider):parent_type="layout_group";parent_options="layout='table';rows=5;spacings='huge'"
+{
+	decorator("Named Provider Test", heading, "level=1;cursor='ns'", cX);
+	group(g2, layout_group, "layout='table';label='';cols=2", sfF) {
+		group(g3, layout_group, "layout='table';label='';rows=3;spacings='huge';cursor='hand'", fFs) {
+			control(nr lines,nr_lines,value_slider,"min=10;max=200;log=true;ticks=true;align='BC'",fs);
+			control(line width,line_width,value_slider,"min=1;max=20;log=true;ticks=true;align='BC';cursor='we'",fs);
+			control(aspect,layout_aspect,value_slider,"min=0.1;max=2;ticks=true;align='BC'",fs);
+		}
+		control(color,line_color,"","align='BC';cursor='cross'",sfF);
+	}			
+	decorator("", separator, "cursor='move'", f);
+	view(some_text,some_text,"","align='TC';cursor='insert'",sf);
+	decorator("", separator, "cursor='we'", sSf);
+}

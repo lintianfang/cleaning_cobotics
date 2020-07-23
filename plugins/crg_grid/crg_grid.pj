@@ -1,0 +1,8 @@
+@=
+projectType="plugin";
+projectName="crg_grid";
+projectGUID="317b18c0-fc35-11dd-87af-0800200c9a66";
+addProjectDeps=["cgv_render", "cgv_gui","cgv_base","cgv_type","cgv_reflect","cgv_utils","cgv_signal","cgv_data", "cgv_gl"];
+addProjectDirs=[CGV_DIR."/libs/cgv_gl"];
+addIncDirs=[CGV_DIR."/libs"];
+

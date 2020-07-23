@@ -1,0 +1,6 @@
+@=
+projectType="plugin";
+projectName="cg_meta";
+projectGUID="510E9DF9-1CCC-478b-8462-2FAA72DC6AF4";
+addProjectDeps=["cgv_render", "cgv_gui", "cgv_type", "cgv_utils", "cgv_base", "cgv_data","cgv_signal"];
+addSharedDefines=["CGV_GUI_META_EXPORTS"];

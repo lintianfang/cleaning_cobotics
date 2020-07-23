@@ -1,0 +1,8 @@
+@=
+projectType="plugin";
+projectName="crg_antialias";
+projectGUID="A5FD96F0-C265-4421-BE59-B3EFE54AC96B";
+addProjectDeps=["cgv_render", "cgv_gui", "cgv_base","cgv_type","cgv_reflect", "cgv_data","cgv_utils","cgv_signal", "cgv_gl"];
+addProjectDirs=[CGV_DIR."/plugins", CGV_DIR."/libs/glsu", CGV_DIR."/libs/cgv_gl"];
+addIncDirs=[CGV_DIR."/libs", CGV_DIR."/libs/glsu"];
+addSharedDefines=["CGV_RENDER_ANTIALIAS_EXPORTS"];

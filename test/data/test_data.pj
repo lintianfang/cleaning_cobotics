@@ -1,0 +1,7 @@
+@=
+projectName="test_data";
+projectType="test";
+projectGUID="8e76c780-fd21-11dd-87af-0800200c9a65";
+addProjectDirs=[CGV_DIR."/test"];
+addProjectDeps=["cgv_utils", "cgv_type", "cgv_reflect", "cgv_data", "test_type"];
+addSharedDefines=["CGV_TEST_EXPORTS"];
