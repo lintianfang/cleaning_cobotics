@@ -1,3 +1,2 @@
 cmake/local_build_dir.cmake
-lib
 build
