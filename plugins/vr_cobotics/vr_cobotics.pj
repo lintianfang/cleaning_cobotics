@@ -15,7 +15,7 @@ addLibDirs=[
 	INPUT_DIR."/protocbuf64/lib"
 ];
 excludeSourceDirs=[INPUT_DIR."/protocbuf64" ];
-addDependencies=["nng", "gmock", "gmock_main","libprotobuf", "libprotobuf-lite", "libprotoc"];
+addDependencies=["nng", "gmock", "gmock_main","libprotobuf", "libprotobuf-lite", "libprotoc", "libprotocd", "libprotobufd", "libprotobuf-lited"];
 addCommandLineArguments=[
 	after("type(shader_config):shader_path='".INPUT_DIR.";".CGV_DIR."/libs/cgv_gl/glsl'","cg_fltk"),	'config:"'.INPUT_DIR.'/config.def"'
 ];
