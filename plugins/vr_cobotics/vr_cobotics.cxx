@@ -278,15 +278,35 @@ void vr_cobotics::construct_movable_boxes(float tw, float td, float th, float tW
 		movable_box_rotations.push_back(rot);
 	}
 }
+/// construct a trash bin 
+void vr_cobotics::construct_trash_bin(float cw, float cd, float ch, float cH, float x, float y, float z)
+{
+	rgb trash_bin_clr(0.8f, 0.7f, 0.7f);
+	boxes.push_back(box3(vec3(-0.5f * cw + x, 0 + y, -0.5f * cd + z), vec3(0.5f * cw + x, ch + y, 0.5f * cd + z)));
+	box_colors.push_back(trash_bin_clr);
 
+	boxes.push_back(box3(vec3(-0.5f * cw + x, 0 + y, -0.5f * cd + z), vec3(-0.5f * cw - ch + x, cH + y, 0.5f * cd + z)));
+	box_colors.push_back(trash_bin_clr);
+
+	boxes.push_back(box3(vec3(0.5f * cw - ch + x, 0 + y, -0.5f * cd + z), vec3(0.5f * cw + x, cH + y, 0.5f * cd + z)));
+	box_colors.push_back(trash_bin_clr);
+
+	boxes.push_back(box3(vec3(-0.5f * cw + x, 0 + y, -0.5f * cd + z), vec3(0.5f * cw + x, cH + y, -0.5f * cd + ch + z)));
+	box_colors.push_back(trash_bin_clr);
+
+	boxes.push_back(box3(vec3(-0.5f * cw - ch + x, 0 + y, 0.5f * cd + ch + z), vec3(0.5f * cw + x, cH + y, 0.5f * cd + z)));
+	box_colors.push_back(trash_bin_clr);
+}
 /// construct a scene with a table
-void vr_cobotics::build_scene(float w, float d, float h, float W, float tw, float td, float th, float tW)
+void vr_cobotics::build_scene(float w, float d, float h, float W, float tw, float td, float th, float tW, float cw, float cd, float ch, float cH, float x, float y, float z)
 {
 	construct_room(w, d, h, W, false, false);
 	construct_table(tw, td, th, tW);
 	construct_environment(0.3f, 3 * w, 3 * d, w, d, h);
 	//construct_environment(0.4f, 0.5f, 1u, w, d, h);
 	construct_movable_boxes(tw, td, th, tW, 20);
+	if (is_trashbin)
+		construct_trash_bin(cw, cd, ch, cH, x, y ,z);
 }
 
 vr_cobotics::vr_cobotics() 
@@ -307,8 +327,9 @@ vr_cobotics::vr_cobotics()
 	camera_aspect = 1;
 	use_matrix = true;
 	show_seethrough = false;
+	is_trashbin = false;
 	set_name("vr_cobotics");
-	build_scene(5, 7, 3, 0.2f, 1.6f, 0.8f, 0.7f, 0.03f);
+	build_scene(5, 7, 3, 0.2f, 1.6f, 0.8f, 0.7f, 0.03f, 0.2f, 0.2f, 0.01f, 0.25f, 1.5f, 0.0f, 0.0f);
 	vr_view_ptr = 0;
 	ray_length = 2;
 	last_kit_handle = 0;
@@ -1535,6 +1556,15 @@ void vr_cobotics::sender()
 				clr.B() = object.color().b();
 				movable_box_colors.emplace_back(clr);
 				std::cout << object.pos().x() << std::endl;
+			}
+			else if (object.type() == 2)
+			{
+				is_trashbin = true;
+				std::cout << "this is trash can" << std::endl;
+			}
+			else if (object.type() == 3)
+			{
+				std::cout << "this is robot arm" << std::endl;
 			}
 		}
 		//save_boxes("boxes", movable_boxes, movable_box_colors, movable_box_translations, movable_box_rotations);

@@ -121,6 +121,14 @@ protected:
 	float edit_box_step;
 	float edit_box_max_size;
 	int edit_box_selected_axis;
+	// if the trash bin exists
+	bool is_trashbin;
+
+	// store the trash can
+	std::vector<box3> trash_boxes;
+	std::vector<rgb> trash_boxes_colors;
+	std::vector<vec3> trash_boxes_translations;
+	std::vector<quat> trash_box_rotations;
 
 	// store the movable boxes
 	std::vector<box3> movable_boxes;
@@ -147,6 +155,7 @@ protected:
 	cgv::render::sphere_render_style srs;
 	cgv::render::box_render_style movable_style;
 	cgv::render::box_render_style wire_frame_style;
+	cgv::render::box_render_style trash_bin_style;
 
 	int nr_cameras;
 	int frame_width, frame_height;
@@ -190,8 +199,10 @@ public:
 	void construct_environment(float s, float ew, float ed, float w, float d, float h);
 	/// construct boxes that represent a table of dimensions tw,td,th and leg width tW
 	void construct_movable_boxes(float tw, float td, float th, float tW, size_t nr);
+	/// construct trash bin
+	void construct_trash_bin(float cw, float cd, float ch, float cH, float x, float y, float z);
 	/// construct a scene with a table
-	void build_scene(float w, float d, float h, float W, float tw, float td, float th, float tW);
+	void build_scene(float w, float d, float h, float W, float tw, float td, float th, float tW, float cw, float cd, float ch, float cH, float x, float y, float z);
 public:
 	vr_cobotics();
 
