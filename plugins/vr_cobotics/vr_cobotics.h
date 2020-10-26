@@ -92,7 +92,7 @@ protected:
 	// keep deadzone and precision vector for left controller
 	cgv::gui::vr_server::vec_flt_flt left_deadzone_and_precision;
 	// store handle to vr kit of which left deadzone and precision is configured
-	void* last_kit_handle;
+	//void* last_kit_handle;
 
 	// length of to be rendered rays
 	float ray_length;
@@ -114,6 +114,7 @@ protected:
 
 	//settings for live editing boxes
 	bool box_edit_mode;
+	bool is_nng;
 	box3 new_box;
 	float new_box_distance;
 	rgb new_box_color;
@@ -181,11 +182,14 @@ protected:
 	vec2 center_right;
 
 public:
-	void init_cameras(vr::vr_kit* kit_ptr);
+	// define listenning address and sending address
+	std::string listen_address;
+	std::string send_address;
+	//void init_cameras(vr::vr_kit* kit_ptr);
 
-	void start_camera();
+	//void start_camera();
 
-	void stop_camera();
+	//void stop_camera();
 
 	/// compute intersection points of controller ray with movable boxes
 	void compute_intersections(const vec3& origin, const vec3& direction, int ci, const rgb& color);
@@ -261,6 +265,8 @@ public:
 	void change_box_extents(Axis axis,int ci);
 	void delete_box(int bi);
 	size_t clear_intersections(int ci);
+
+	
 };
 
 ///@}

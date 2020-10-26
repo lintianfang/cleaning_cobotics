@@ -75,7 +75,7 @@ size_t vr_cobotics::clear_intersections(int ci)
 	return i;
 }
 
-void vr_cobotics::init_cameras(vr::vr_kit* kit_ptr)
+/*void vr_cobotics::init_cameras(vr::vr_kit* kit_ptr)
 {
 	vr::vr_camera* camera_ptr = kit_ptr->get_camera();
 	if (!camera_ptr)
@@ -99,9 +99,9 @@ void vr_cobotics::init_cameras(vr::vr_kit* kit_ptr)
 		std::cout << "  uP=" << camera_projection_matrix[2+i] << std::endl;
 	}
 	post_recreate_gui();
-}
+}*/
 
-void vr_cobotics::start_camera()
+/*void vr_cobotics::start_camera()
 {
 	if (!vr_view_ptr)
 		return;
@@ -127,7 +127,7 @@ void vr_cobotics::stop_camera()
 		return;
 	if (!camera_ptr->stop())
 		cgv::gui::message(camera_ptr->get_last_error());
-}
+}*/
 
 /// compute intersection points of controller ray with movable boxes
 void vr_cobotics::compute_intersections(const vec3& origin, const vec3& direction, int ci, const rgb& color)
@@ -162,7 +162,7 @@ void vr_cobotics::compute_intersections(const vec3& origin, const vec3& directio
 /// register on device change events
 void vr_cobotics::on_device_change(void* kit_handle, bool attach)
 {
-	if (attach) {
+	/*if (attach) {
 		if (last_kit_handle == 0) {
 			vr::vr_kit* kit_ptr = vr::get_vr_kit(kit_handle);
 			init_cameras(kit_ptr);
@@ -179,7 +179,7 @@ void vr_cobotics::on_device_change(void* kit_handle, bool attach)
 			last_kit_handle = 0;
 			post_recreate_gui();
 		}
-	}
+	}*/
 }
 
 /// construct boxes that represent a table of dimensions tw,td,th and leg width tW
@@ -332,8 +332,8 @@ vr_cobotics::vr_cobotics()
 	build_scene(5, 7, 3, 0.2f, 1.6f, 0.8f, 0.7f, 0.03f, 0.2f, 0.2f, 0.01f, 0.25f, 1.5f, 0.0f, 0.0f);
 	vr_view_ptr = 0;
 	ray_length = 2;
-	last_kit_handle = 0;
-	connect(cgv::gui::ref_vr_server().on_device_change, this, &vr_cobotics::on_device_change);
+	//last_kit_handle = 0;
+	//connect(cgv::gui::ref_vr_server().on_device_change, this, &vr_cobotics::on_device_change);
 
 	mesh_scale = 0.0005f;
 	mesh_location = dvec3(0, 0.85f, 0);
@@ -347,6 +347,9 @@ vr_cobotics::vr_cobotics()
 	box_select_mode = false;
 	trash_bin_select_mode = false;
 	box_edit_mode = false;
+	is_nng = true;
+	listen_address = "xxx";
+	//send_address = "2";
 	for (auto& a : grab_number) a = 0;
 	new_box = box3(vec3(-0.05f), vec3(0.05f));
 	new_box_color = rgb(88.f / 255.f, 24.f / 255.f, 69.f / 255.f);
@@ -408,6 +411,9 @@ void vr_cobotics::on_set(void* member_ptr)
 			vrr_t_start = std::chrono::steady_clock::now();
 		}
 	}
+	/*if (member_ptr == &listen_address) {
+
+	}*/
 	update_member(member_ptr);
 	post_redraw();
 }
@@ -731,8 +737,8 @@ bool vr_cobotics::init(cgv::render::context& ctx)
 	if (!cgv::utils::has_option("NO_OPENVR"))
 		ctx.set_gamma(1.0f);
 
-	if (!seethrough.build_program(ctx, "seethrough.glpr"))
-		cgv::gui::message("could not build seethrough program");
+	/*if (!seethrough.build_program(ctx, "seethrough.glpr"))
+		cgv::gui::message("could not build seethrough program");*/
 	
 	cgv::media::mesh::simple_mesh<> M;
 #ifdef _DEBUG
@@ -837,7 +843,7 @@ void vr_cobotics::init_frame(cgv::render::context& ctx)
 
 		label_tex.generate_mipmaps(ctx);
 	}
-	if (vr_view_ptr && vr_view_ptr->get_rendered_vr_kit() != 0 && vr_view_ptr->get_rendered_eye() == 0 && vr_view_ptr->get_rendered_vr_kit() == vr_view_ptr->get_current_vr_kit()) {
+	/*if (vr_view_ptr && vr_view_ptr->get_rendered_vr_kit() != 0 && vr_view_ptr->get_rendered_eye() == 0 && vr_view_ptr->get_rendered_vr_kit() == vr_view_ptr->get_current_vr_kit()) {
 		vr::vr_kit* kit_ptr = vr_view_ptr->get_current_vr_kit();
 		if (kit_ptr) {
 			vr::vr_camera* camera_ptr = kit_ptr->get_camera();
@@ -909,7 +915,7 @@ void vr_cobotics::init_frame(cgv::render::context& ctx)
 				}
 			}
 		}
-	}
+	}*/
 }
 
 void vr_cobotics::draw(cgv::render::context& ctx)
@@ -1167,58 +1173,13 @@ void vr_cobotics::finish_draw(cgv::render::context& ctx)
 					//0.2f*distribution(generator)+0.1f));
 void vr_cobotics::create_gui() {
 	add_decorator("vr_cobotics", "heading", "level=2");
-	add_member_control(this, "mesh_scale", mesh_scale, "value_slider", "min=0.1;max=10;log=true;ticks=true");
-	add_gui("mesh_location", mesh_location, "vector", "options='min=-3;max=3;ticks=true");
-	add_gui("mesh_orientation", static_cast<dvec4&>(mesh_orientation), "direction", "options='min=-1;max=1;ticks=true");
-	add_member_control(this, "ray_length", ray_length, "value_slider", "min=0.1;max=10;log=true;ticks=true");
-	add_member_control(this, "show_seethrough", show_seethrough, "check");
-	if(last_kit_handle) {
-		add_decorator("cameras", "heading", "level=3");
-		add_view("nr", nr_cameras);
-		if(nr_cameras > 0) {
-			connect_copy(add_button("start")->click, cgv::signal::rebind(this, &vr_cobotics::start_camera));
-			connect_copy(add_button("stop")->click, cgv::signal::rebind(this, &vr_cobotics::stop_camera));
-			add_view("frame_width", frame_width, "", "w=20", "  ");
-			add_view("height", frame_height, "", "w=20", "  ");
-			add_view("split", frame_split, "", "w=50");
-			add_member_control(this, "undistorted", undistorted, "check");
-			add_member_control(this, "shared_texture", shared_texture, "check");
-			add_member_control(this, "max_rectangle", max_rectangle, "check");
-			add_member_control(this, "use_matrix", use_matrix, "check");
-			add_member_control(this, "gamma", seethrough_gamma, "value_slider", "min=0.1;max=10;log=true;ticks=true");
-			add_member_control(this, "extent_x", extent_texcrd[0], "value_slider", "min=0.2;max=2;ticks=true");
-			add_member_control(this, "extent_y", extent_texcrd[1], "value_slider", "min=0.2;max=2;ticks=true");
-			add_member_control(this, "center_left_x", center_left[0], "value_slider", "min=0.2;max=0.8;ticks=true");
-			add_member_control(this, "center_left_y", center_left[1], "value_slider", "min=0.2;max=0.8;ticks=true");
-			add_member_control(this, "center_right_x", center_right[0], "value_slider", "min=0.2;max=0.8;ticks=true");
-			add_member_control(this, "center_right_y", center_right[1], "value_slider", "min=0.2;max=0.8;ticks=true");
-			add_member_control(this, "background_distance", background_distance, "value_slider", "min=0.1;max=10;log=true;ticks=true");
-			add_member_control(this, "background_extent", background_extent, "value_slider", "min=0.01;max=10;log=true;ticks=true");
-		}
-		vr::vr_kit* kit_ptr = vr::get_vr_kit(last_kit_handle);
-		const std::vector<std::pair<int, int> >* t_and_s_ptr = 0;
-		if(kit_ptr)
-			t_and_s_ptr = &kit_ptr->get_controller_throttles_and_sticks(0);
-		add_decorator("deadzone and precisions", "heading", "level=3");
-		int ti = 0;
-		int si = 0;
-		for(unsigned i = 0; i < left_deadzone_and_precision.size(); ++i) {
-			std::string prefix = std::string("unknown[") + cgv::utils::to_string(i) + "]";
-			if(t_and_s_ptr) {
-				if(t_and_s_ptr->at(i).second == -1)
-					prefix = std::string("throttle[") + cgv::utils::to_string(ti++) + "]";
-				else
-					prefix = std::string("stick[") + cgv::utils::to_string(si++) + "]";
-			}
-			add_member_control(this, prefix + ".deadzone", left_deadzone_and_precision[i].first, "value_slider", "min=0;max=1;ticks=true;log=true");
-			add_member_control(this, prefix + ".precision", left_deadzone_and_precision[i].second, "value_slider", "min=0;max=1;ticks=true;log=true");
-		}
-	}
-	if (begin_tree_node("NNG events", 1.f)) {
+	if (begin_tree_node("NNG events", is_nng)) {
 		align("\a");
+		add_member_control(this, "listen_address", listen_address);
+		add_member_control(this, "send_address", send_address);
 		connect_copy(add_button("receive")->click, rebind(this, &vr_cobotics::on_send_movable_boxes_id_cb));
-		add_member_control(this, "select box", box_select_mode, "toggle");
-		add_member_control(this, "select trash bin", trash_bin_select_mode, "toggle");
+		add_member_control(this, "select a box", box_select_mode, "toggle");
+		add_member_control(this, "select a trash bin", trash_bin_select_mode, "toggle");
 		align("\b");
 		end_tree_node(style);
 	}
@@ -1294,9 +1255,11 @@ void vr_cobotics::create_gui() {
 bool vr_cobotics::self_reflect(cgv::reflect::reflection_handler & rh)
 {
 	return	rh.reflect_member("vr_events_record_path", vr_events_record_path) &&
-		    rh.reflect_member("select a box", box_select_mode) &&
-			rh.reflect_member("select a trash bin", trash_bin_select_mode) &&
-			rh.reflect_member("box_edit_mode", box_edit_mode);
+		rh.reflect_member("select a box", box_select_mode) &&
+		rh.reflect_member("select a trash bin", trash_bin_select_mode) &&
+		rh.reflect_member("box_edit_mode", box_edit_mode) &&
+		rh.reflect_member("listen_address", listen_address) &&
+		rh.reflect_member("send_address", send_address);
 }
 
 bool vr_cobotics::save_boxes(const std::string fn, const std::vector<box3>& boxes, const std::vector<rgb>& box_colors, const std::vector<vec3>& box_translations, const std::vector<quat>& box_rotations)
@@ -1505,10 +1468,13 @@ Selection vr_cobotics::obtainSelection(int box_id)
 
 void vr_cobotics::sender()
 {
+	//std::cout << "la: " << listen_address << std::endl;
 	nng::socket soc_pair_rec = nng::pair::open();
-	soc_pair_rec.listen("tcp://127.0.0.1:6577");
+	const char* la = listen_address.c_str();
+	const char* da = send_address.c_str();
+	soc_pair_rec.listen(la);
 
-	soc_pair_rec.dial("tcp://127.0.0.1:6576");
+	soc_pair_rec.dial(da);
 
 	Selection selection = obtainSelection(1);
 	nng::view buf;
