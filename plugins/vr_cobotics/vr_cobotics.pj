@@ -12,7 +12,9 @@ addProjectDeps=["cgv_utils", "cgv_type", "cgv_data", "cgv_base", "cgv_math",
 addIncDirs=[INPUT_DIR, CGV_DIR."/libs", CGV_DIR."/test", INPUT_DIR."/nng64/nng/include", INPUT_DIR."/nng64/nngpp/include", INPUT_DIR."/protocbuf64/include"];
 addLibDirs=[
     INPUT_DIR."/nng64/Release",
-	INPUT_DIR."/protocbuf64/lib"
+    INPUT_DIR."/nng64/Debug",
+	INPUT_DIR."/protocbuf64/lib/debug",
+	INPUT_DIR."/protocbuf64/lib/release"
 ];
 excludeSourceDirs=[INPUT_DIR."/protocbuf64" ];
 addDependencies=["nng", "gmock", "gmock_main","libprotobuf", "libprotobuf-lite", "libprotoc", "libprotocd", "libprotobufd", "libprotobuf-lited"];

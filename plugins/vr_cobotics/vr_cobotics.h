@@ -191,8 +191,6 @@ public:
 
 	/// compute intersection points of controller ray with movable boxes
 	void compute_intersections(const vec3& origin, const vec3& direction, int ci, const rgb& color);
-	/// register on device change events
-	void on_device_change(void* kit_handle, bool attach);
 	/// construct boxes that represent a table of dimensions tw,td,th and leg width tW
 	void construct_table(float tw, float td, float th, float tW);
 	/// construct boxes that represent a room of dimensions w,d,h and wall width W

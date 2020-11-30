@@ -105,29 +105,6 @@ void vr_cobotics::compute_intersections(const vec3& origin, const vec3& directio
 	}
 }
 
-/// register on device change events
-void vr_cobotics::on_device_change(void* kit_handle, bool attach)
-{
-	/*if (attach) {
-		if (last_kit_handle == 0) {
-			vr::vr_kit* kit_ptr = vr::get_vr_kit(kit_handle);
-			init_cameras(kit_ptr);
-			if (kit_ptr) {
-				last_kit_handle = kit_handle;
-				left_deadzone_and_precision = kit_ptr->get_controller_throttles_and_sticks_deadzone_and_precision(0);
-				cgv::gui::ref_vr_server().provide_controller_throttles_and_sticks_deadzone_and_precision(kit_handle, 0, &left_deadzone_and_precision);
-				post_recreate_gui();
-			}
-		}
-	}
-	else {
-		if (kit_handle == last_kit_handle) {
-			last_kit_handle = 0;
-			post_recreate_gui();
-		}
-	}*/
-}
-
 /// construct boxes that represent a table of dimensions tw,td,th and leg width tW
 void vr_cobotics::construct_table(float tw, float td, float th, float tW) {
 	// construct table
@@ -294,8 +271,6 @@ vr_cobotics::vr_cobotics()
 	trash_bin_select_mode = false;
 	box_edit_mode = false;
 	is_nng = true;
-	listen_address = "xxx";
-	//send_address = "2";
 	isconnected = false;
 	for (auto& a : grab_number) a = 0;
 	new_box = box3(vec3(-0.05f), vec3(0.05f));
@@ -1306,29 +1281,51 @@ Selection vr_cobotics::obtainSelection(int box_id)
 
 void vr_cobotics::buildconnection()
 {
-	if (!isconnected)
-	{
-		soc_pair = nng::pair::open();
-		const char* da = send_address.c_str();
-		soc_pair.dial(da);
-		isconnected = true;
-		std::cout << "build connection successfully!" << std::endl;
+	try {
+		if (!isconnected)
+		{
+			soc_pair = nng::pair::open();
+			const char* da = send_address.c_str();
+			soc_pair.dial(da);
+			isconnected = true;
+			std::cout << "build connection successfully!" << std::endl;
+		}
+	}
+	catch (const nng::exception& e) {
+		// who() is the name of the nng function that produced the error
+		// what() is a description of the error code
+		printf("%s: %s\n", e.who(), e.what());
 	}
 }
 
 void vr_cobotics::destroyconnection()
 {
-	if (isconnected)
-	{
-		soc_pair.release();
-		isconnected = false;
-		std::cout << "release connection!" << std::endl;
+	try {
+		if (isconnected)
+		{
+			soc_pair.release();
+			isconnected = false;
+			std::cout << "release connection!" << std::endl;
+		}
+	}
+	catch (const nng::exception& e) {
+		// who() is the name of the nng function that produced the error
+		// what() is a description of the error code
+		printf("%s: %s\n", e.who(), e.what());
 	}
 }
 
 void vr_cobotics::keeplisten()
 {
-	nng::view rep_buf = soc_pair.recv();
+	nng::view rep_buf;
+	try {
+		rep_buf = soc_pair.recv();
+	}
+	catch (const nng::exception& e) {
+		// who() is the name of the nng function that produced the error
+		// what() is a description of the error code
+		printf("%s: %s\n", e.who(), e.what());
+	}
 
 	// check the content
 	if (rep_buf != "") {
@@ -1390,12 +1387,18 @@ void vr_cobotics::send_selection(int box_id)
 {
 	Selection selection = obtainSelection(box_id);
 	nng::view buf;
-	int length = selection.ByteSize();
-	void* data = nng_alloc(length);
-	selection.SerializeToArray(data, length);
-
-	buf = nng::view::view(data, length);
-	soc_pair.send(buf);
+	try {
+		int length = selection.ByteSize();
+		void* data = nng_alloc(length);
+		selection.SerializeToArray(data, length);
+		buf = nng::view::view(data, length);
+		soc_pair.send(buf);
+	}
+	catch (const nng::exception& e) {
+		// who() is the name of the nng function that produced the error
+		// what() is a description of the error code
+		printf("%s: %s\n", e.who(), e.what());
+	}
 }
 
 #include <cgv/base/register.h>
