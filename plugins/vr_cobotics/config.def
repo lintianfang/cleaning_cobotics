@@ -48,7 +48,7 @@ type(vr_wall):stereo_window_mode=0
 // 3 ... fullscreen on monitors 1 + 2, 4 ... fullscreen on monitor 3, 5 ... fullscreen on monitors 1 + 3
 
 //name(vr interactor):separate_view=false;none_separate_view=2
-name(vr interactor):hmd_vis_type=1
+name(vr interactor):hmd_vis_type=2
 //name(vr interactor):controller_vis_type=2
 //name(vr interactor):tracker_vis_type=2
 name(vr interactor):blit_vr_views=false;blit_width=400;blit_aspect_scale=1.3

@@ -185,11 +185,9 @@ public:
 	// define listenning address and sending address
 	std::string listen_address;
 	std::string send_address;
-	//void init_cameras(vr::vr_kit* kit_ptr);
 
-	//void start_camera();
-
-	//void stop_camera();
+	nng::socket soc_pair;
+	bool isconnected;
 
 	/// compute intersection points of controller ray with movable boxes
 	void compute_intersections(const vec3& origin, const vec3& direction, int ci, const rgb& color);
@@ -241,9 +239,9 @@ public:
 	/*! loads boxes stored by the save_boxes method. This method will append the box information from the file to the vectors given by the arguments.*/
 	bool load_boxes(const std::string fn, std::vector<box3>& boxes, std::vector<rgb>& box_colors, std::vector<vec3>& box_translations, std::vector<quat>& box_rotations);
 
-	Scene buildDummyScene();
+	void buildconnection();
 
-	void sender();
+	void keeplisten();
 
 	void send_selection(int box_id);
 
