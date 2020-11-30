@@ -1055,6 +1055,7 @@ void vr_cobotics::create_gui() {
 		add_member_control(this, "listen_address", listen_address);
 		add_member_control(this, "send_address", send_address);
 		connect_copy(add_button("build connection")->click, rebind(this, &vr_cobotics::buildconnection));
+		connect_copy(add_button("destroy connection")->click, rebind(this, &vr_cobotics::destroyconnection));
 		connect_copy(add_button("receive")->click, rebind(this, &vr_cobotics::on_send_movable_boxes_id_cb));
 		add_member_control(this, "select a box", box_select_mode, "toggle");
 		add_member_control(this, "select a trash bin", trash_bin_select_mode, "toggle");
@@ -1315,23 +1316,18 @@ void vr_cobotics::buildconnection()
 	}
 }
 
+void vr_cobotics::destroyconnection()
+{
+	if (isconnected)
+	{
+		soc_pair.release();
+		isconnected = false;
+		std::cout << "release connection!" << std::endl;
+	}
+}
+
 void vr_cobotics::keeplisten()
 {
-	/*nng::socket soc_pair_rec = nng::pair::open();
-	const char* la = listen_address.c_str();
-	const char* da = send_address.c_str();
-	soc_pair_rec.listen(la);
-
-	soc_pair_rec.dial(da);
-
-	Selection selection = obtainSelection(1);
-	nng::view buf;
-	int length = selection.ByteSize();
-	void* data = nng_alloc(length);
-	selection.SerializeToArray(data, length);
-
-	buf = nng::view::view(data, length);
-	soc_pair_rec.send(buf);*/
 	nng::view rep_buf = soc_pair.recv();
 
 	// check the content
@@ -1374,6 +1370,11 @@ void vr_cobotics::keeplisten()
 			else if (object.type() == 2)
 			{
 				is_trashbin = true;
+				vec3 pos;
+				pos.x() = object.pos().x();
+				pos.y() = object.pos().z();
+				pos.z() = object.pos().y();
+				construct_trash_bin(0.2f, 0.2f, 0.01f, 0.15f, pos.x(), pos.y() - 0.05, pos.z());
 				std::cout << "this is trash can" << std::endl;
 			}
 			else if (object.type() == 3)
@@ -1387,13 +1388,6 @@ void vr_cobotics::keeplisten()
 
 void vr_cobotics::send_selection(int box_id)
 {
-	/*nng::socket soc_pair_rec = nng::pair::open();
-	const char* la = listen_address.c_str();
-	const char* da = send_address.c_str();
-	soc_pair_rec.listen("tcp://127.0.0.1:6577");
-
-	soc_pair_rec.dial("tcp://127.0.0.1:6576");*/
-
 	Selection selection = obtainSelection(box_id);
 	nng::view buf;
 	int length = selection.ByteSize();
@@ -1402,52 +1396,6 @@ void vr_cobotics::send_selection(int box_id)
 
 	buf = nng::view::view(data, length);
 	soc_pair.send(buf);
-	/*nng::view rep_buf = soc_pair.recv();
-
-	// check the content
-	if (rep_buf != "") {
-		Scene scene;
-		scene.ParseFromArray(rep_buf.data(), rep_buf.size());
-		std::cout << "the number of objects: " << scene.objects_size() << std::endl;
-		vec3 minp, maxp, trans;
-		quat rot;
-		rgb clr;
-		for (auto& object : scene.objects())
-		{
-			std::cout << "type: " << object.type() << " name: " << object.id() << std::endl;
-			if (object.type() == 1)
-			{
-				minp.x() = -object.size().length() / 2;
-				minp.y() = -object.size().height() / 2;
-				minp.z() = -object.size().width() / 2;
-				maxp.x() = object.size().length() / 2;
-				maxp.y() = object.size().height() / 2;
-				maxp.z() = object.size().width() / 2;
-				movable_boxes.emplace_back(minp, maxp);
-				// exchange y and z, because ros uses a physical coordinate.
-				trans.x() = object.pos().x();
-				trans.y() = object.pos().z();
-				trans.z() = object.pos().y();
-				movable_box_translations.emplace_back(trans);
-				rot.w() = object.orientation().w();
-				rot.x() = object.orientation().x();
-				rot.y() = object.orientation().z();
-				rot.z() = object.orientation().y();
-				movable_box_rotations.emplace_back(rot);
-				clr.R() = object.color().r();
-				clr.G() = object.color().g();
-				clr.B() = object.color().b();
-				movable_box_colors.emplace_back(clr);
-				std::cout << object.pos().x() << std::endl;
-			}
-		}
-		//save_boxes("boxes", movable_boxes, movable_box_colors, movable_box_translations, movable_box_rotations);
-	}*/
-}
-
-void vr_cobotics::receiver()
-{
-
 }
 
 #include <cgv/base/register.h>

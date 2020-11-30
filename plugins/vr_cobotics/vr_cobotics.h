@@ -241,13 +241,13 @@ public:
 
 	void buildconnection();
 
+	void destroyconnection();
+
 	void keeplisten();
 
 	void send_selection(int box_id);
 
 	Selection obtainSelection(int box_id);
-
-	void receiver();
 	protected:
 
 	void resize_box(int box_index, vec3 extends);
