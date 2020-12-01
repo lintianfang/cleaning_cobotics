@@ -468,8 +468,8 @@ bool vr_cobotics::handle(cgv::gui::event& e)
 							bi = intersection_box_indices[i];
 						}
 					}
-					send_selection(bi);
-					std::cout << "send a message!" << std::endl;
+					send_selection(movable_box_id.at(bi));
+					std::cout << "send a message of box " << bi << std::endl;
 				}
 			}
 			if (trash_bin_select_mode) {
@@ -487,7 +487,7 @@ bool vr_cobotics::handle(cgv::gui::event& e)
 							bi = intersection_box_indices[i];
 						}
 					}
-					send_selection(bi);
+					send_selection(movable_box_id.at(bi));
 				}
 				std::cout << "send a message about trash bin!" << std::endl;
 			}
@@ -833,16 +833,6 @@ void vr_cobotics::draw(cgv::render::context& ctx)
 					vr_view_ptr->get_current_vr_kit(), *vr_view_ptr->get_current_vr_state(),
 					0.01f, 2 * background_distance, eye, undistorted);
 
-				/* equivalent detailed code relies on more knowledge on program parameters
-				mat4 TM = vr::get_texture_transform(vr_view_ptr->get_current_vr_kit(), *vr_view_ptr->get_current_vr_state(), 0.01f, 2 * background_distance, eye, undistorted);
-				prog.set_uniform(ctx, "texture_matrix", TM);
-
-				prog.set_uniform(ctx, "extent_texcrd", extent_texcrd);
-				prog.set_uniform(ctx, "frame_split", frame_split);
-				prog.set_uniform(ctx, "center_left", center_left);
-				prog.set_uniform(ctx, "center_right", center_right);
-				prog.set_uniform(ctx, "eye", eye);
-				*/
 				prog.enable(ctx);
 				ctx.set_color(rgba(1, 1, 1, 1));
 
@@ -1272,10 +1262,17 @@ void vr_cobotics::clear_frame_boxes()
 	frame_box_colors.clear();
 }
 
-Selection vr_cobotics::obtainSelection(int box_id)
+Selection vr_cobotics::obtainSelection(std::string box_id)
 {
 	Selection selection;
-	selection.set_id(std::to_string(box_id));
+	try {
+		selection.set_id(box_id);
+	}
+	catch (const nng::exception& e) {
+		// who() is the name of the nng function that produced the error
+		// what() is a description of the error code
+		printf("%s: %s\n", e.who(), e.what());
+	}
 	return selection;
 }
 
@@ -1331,11 +1328,28 @@ void vr_cobotics::keeplisten()
 	if (rep_buf != "") {
 		clear_movable_boxes();
 		Scene scene;
-		scene.ParseFromArray(rep_buf.data(), rep_buf.size());
+		try {
+			scene.ParseFromArray(rep_buf.data(), rep_buf.size());
+		}
+		catch (const nng::exception& e) {
+			// who() is the name of the nng function that produced the error
+			// what() is a description of the error code
+			printf("%s: %s\n", e.who(), e.what());
+		}
 		std::cout << "the number of objects: " << scene.objects_size() << std::endl;
 		vec3 minp, maxp, trans;
 		quat rot;
 		rgb clr;
+
+		std::cout << "Received a new Scene!" << std::endl;
+		std::string s;
+		if (google::protobuf::TextFormat::PrintToString(scene, &s)) {
+			std::cout <<  s << std::endl;
+		}
+		else {
+			std::cerr << "Scene invalid! partial content: " << scene.ShortDebugString() << std::endl;
+		}
+
 		for (auto& object : scene.objects())
 		{
 			std::cout << "type: " << object.type() << " name: " << object.id() << std::endl;
@@ -1362,17 +1376,45 @@ void vr_cobotics::keeplisten()
 				clr.G() = object.color().g();
 				clr.B() = object.color().b();
 				movable_box_colors.emplace_back(clr);
-				std::cout << object.pos().x() << std::endl;
+				movable_box_id.emplace_back(object.id());
+				std::cout << object.size().length() << " " << object.size().height() << " " << object.size().width() << " " << object.pos().x() << " " << object.pos().y() << " " << object.pos().z() << " " << object.orientation().w() << " " << object.orientation().x() << " " << object.orientation().y() << " " << object.orientation().z() << std::endl;
+
 			}
 			else if (object.type() == 2)
 			{
-				is_trashbin = true;
+				/*is_trashbin = true;
 				vec3 pos;
 				pos.x() = object.pos().x();
 				pos.y() = object.pos().z();
-				pos.z() = object.pos().y();
-				construct_trash_bin(0.2f, 0.2f, 0.01f, 0.15f, pos.x(), pos.y() - 0.05, pos.z());
+				pos.z() = object.pos().y();*/
+				//construct_trash_bin(0.2f, 0.2f, 0.01f, 0.15f, pos.x(), pos.y() - 0.05, pos.z());
+				vec3 minp, maxp, trans;
+				quat rot;
+				rgb clr;
+				minp.x() = -object.size().length() / 2;
+				minp.y() = -object.size().height() / 2;
+				minp.z() = -object.size().width() / 2;
+				maxp.x() = object.size().length() / 2;
+				maxp.y() = object.size().height() / 2;
+				maxp.z() = object.size().width() / 2;
+				movable_boxes.emplace_back(minp, maxp);
+				// exchange y and z, because ros uses a physical coordinate.
+				trans.x() = object.pos().x();
+				trans.y() = object.pos().z();
+				trans.z() = object.pos().y();
+				movable_box_translations.emplace_back(trans);
+				rot.w() = object.orientation().w();
+				rot.x() = object.orientation().x();
+				rot.y() = object.orientation().z();
+				rot.z() = object.orientation().y();
+				movable_box_rotations.emplace_back(rot);
+				clr.R() = object.color().r();
+				clr.G() = object.color().g();
+				clr.B() = object.color().b();
+				movable_box_colors.emplace_back(clr);
+				movable_box_id.emplace_back(object.id());
 				std::cout << "this is trash can" << std::endl;
+				std::cout << object.size().length() << " " << object.size().height() << " " << object.size().width() << " " << object.pos().x() << " " << object.pos().y() << " " << object.pos().z() << " " << object.orientation().w() << " " << object.orientation().x() << " " << object.orientation().y() << " " << object.orientation().z() << std::endl;
 			}
 			else if (object.type() == 3)
 			{
@@ -1383,9 +1425,17 @@ void vr_cobotics::keeplisten()
 	}
 }
 
-void vr_cobotics::send_selection(int box_id)
+void vr_cobotics::send_selection(std::string box_id)
 {
 	Selection selection = obtainSelection(box_id);
+	std::cout << "send a new object!" << std::endl;
+	std::string s;
+	if (google::protobuf::TextFormat::PrintToString(selection, &s)) {
+		std::cout << s << std::endl;
+	}
+	else {
+		std::cerr << "Scene invalid! partial content: " << selection.ShortDebugString() << std::endl;
+	}
 	nng::view buf;
 	try {
 		int length = selection.ByteSize();

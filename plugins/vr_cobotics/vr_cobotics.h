@@ -20,6 +20,9 @@
 #include <string>
 #include <world.pb.h>
 
+#include <google/protobuf/text_format.h>
+
+
 ///@ingroup VR
 ///@{
 
@@ -136,6 +139,7 @@ protected:
 	std::vector<rgb> movable_box_colors;
 	std::vector<vec3> movable_box_translations;
 	std::vector<quat> movable_box_rotations;
+	std::vector<std::string> movable_box_id;
 
 	// store the wireframe boxes
 	std::vector<box3> frame_boxes;
@@ -243,9 +247,9 @@ public:
 
 	void keeplisten();
 
-	void send_selection(int box_id);
+	void send_selection(std::string box_id);
 
-	Selection obtainSelection(int box_id);
+	Selection obtainSelection(std::string box_id);
 	protected:
 
 	void resize_box(int box_index, vec3 extends);

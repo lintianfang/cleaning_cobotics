@@ -5,7 +5,7 @@
 name(main):selected="vr_cobotics"
 
 name(vr_cobotics):listen_address="tcp://127.0.0.1:6577"
-name(vr_cobotics):send_address="tcp://127.0.0.1:6576"
+name(vr_cobotics):send_address="tcp://141.76.65.58:6576"
 
 type(vr_emulator):current_kit_index=0
 type(vr_emulator):tracker_1_attachment=1
