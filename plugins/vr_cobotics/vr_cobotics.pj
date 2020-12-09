@@ -11,13 +11,13 @@ addProjectDeps=["cgv_utils", "cgv_type", "cgv_data", "cgv_base", "cgv_math",
 				"cg_vr", "vr_emulator", "openvr_driver"];
 addIncDirs=[INPUT_DIR, CGV_DIR."/libs", CGV_DIR."/test", INPUT_DIR."/nng64/nng/include", INPUT_DIR."/nng64/nngpp/include", INPUT_DIR."/protocbuf64/include"];
 addLibDirs=[
-    INPUT_DIR."/nng64/Release",
     INPUT_DIR."/nng64/Debug",
+	INPUT_DIR."/nng64/Release",
 	INPUT_DIR."/protocbuf64/lib/debug",
 	INPUT_DIR."/protocbuf64/lib/release"
 ];
 excludeSourceDirs=[INPUT_DIR."/protocbuf64" ];
-addDependencies=["nng", "gmock", "gmock_main","libprotobuf", "libprotobuf-lite", "libprotoc", "libprotocd", "libprotobufd", "libprotobuf-lited"];
+addDependencies=["nng", "gmock", "gmock_main", "libprotoc", "libprotobuf", "libprotobuf-lite", "libprotocd", "libprotobufd", "libprotobuf-lited"];
 addCommandLineArguments=[
 	after("type(shader_config):shader_path='".INPUT_DIR.";".CGV_DIR."/libs/cgv_gl/glsl'","cg_fltk"),	'config:"'.INPUT_DIR.'/config.def"'
 ];

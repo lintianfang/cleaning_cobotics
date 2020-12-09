@@ -1,4 +1,4 @@
-#include "vr_cobotics.h"
+﻿#include "vr_cobotics.h"
 
 #include <cgv/signal/rebind.h>
 #include <cgv/base/register.h>
@@ -224,12 +224,12 @@ void vr_cobotics::construct_trash_bin(float cw, float cd, float ch, float cH, fl
 void vr_cobotics::build_scene(float w, float d, float h, float W, float tw, float td, float th, float tW, float cw, float cd, float ch, float cH, float x, float y, float z)
 {
 	construct_room(w, d, h, W, false, false);
-	construct_table(tw, td, th, tW);
+	//construct_table(tw, td, th, tW);
 	construct_environment(0.3f, 3 * w, 3 * d, w, d, h);
 	//construct_environment(0.4f, 0.5f, 1u, w, d, h);
-	construct_movable_boxes(tw, td, th, tW, 20);
-	if (is_trashbin)
-		construct_trash_bin(cw, cd, ch, cH, x, y ,z);
+	//construct_movable_boxes(tw, td, th, tW, 20);
+	/*if (is_trashbin)
+		construct_trash_bin(cw, cd, ch, cH, x, y ,z);*/
 }
 
 vr_cobotics::vr_cobotics() 
@@ -333,9 +333,6 @@ void vr_cobotics::on_set(void* member_ptr)
 			vrr_t_start = std::chrono::steady_clock::now();
 		}
 	}
-	/*if (member_ptr == &listen_address) {
-
-	}*/
 	update_member(member_ptr);
 	post_redraw();
 }
@@ -398,7 +395,7 @@ bool vr_cobotics::handle(cgv::gui::event& e)
 				return true;
 			}
 			case vr::VR_LEFT_STICK_UP:
-				std::cout << "touch pad of right controller pressed at up direction" << std::endl;
+				on_send_movable_boxes_id_cb();
 			case vr::VR_RIGHT_STICK_UP:
 			{
 				return true;
@@ -896,6 +893,9 @@ void vr_cobotics::draw(cgv::render::context& ctx)
 			}
 		}
 	}
+
+	
+
 	cgv::render::box_renderer& renderer = cgv::render::ref_box_renderer(ctx);
 
 	// draw wireframe boxes
@@ -937,6 +937,16 @@ void vr_cobotics::draw(cgv::render::context& ctx)
 	renderer.set_color_array(ctx, box_colors);
 	renderer.render(ctx, 0, boxes.size());
 
+
+	// draw table boxes
+	if (table_boxes.size() > 0) { //pointing the renderer to uninitialized arrays causes assertions in debug mode
+		renderer.set_render_style(style);
+		renderer.set_box_array(ctx, table_boxes);
+		renderer.set_color_array(ctx, table_box_colors);
+		renderer.set_translation_array(ctx, table_box_translations);
+		renderer.set_rotation_array(ctx, table_box_rotations);
+		renderer.render(ctx, 0, table_boxes.size());
+	}
 
 	// draw intersection points
 	if (!intersection_points.empty()) {
@@ -1262,6 +1272,14 @@ void vr_cobotics::clear_frame_boxes()
 	frame_box_colors.clear();
 }
 
+void vr_cobotics::clear_table_boxes()
+{
+	table_boxes.clear();
+	table_box_translations.clear();
+	table_box_rotations.clear();
+	table_box_colors.clear();
+}
+
 Selection vr_cobotics::obtainSelection(std::string box_id)
 {
 	Selection selection;
@@ -1316,7 +1334,7 @@ void vr_cobotics::keeplisten()
 {
 	nng::view rep_buf;
 	try {
-		rep_buf = soc_pair.recv();
+		rep_buf = soc_pair.recv(nng::flag::nonblock);
 	}
 	catch (const nng::exception& e) {
 		// who() is the name of the nng function that produced the error
@@ -1326,6 +1344,7 @@ void vr_cobotics::keeplisten()
 
 	// check the content
 	if (rep_buf != "") {
+		std::cout << "Received a new Scene!" << std::endl;
 		clear_movable_boxes();
 		Scene scene;
 		try {
@@ -1335,13 +1354,14 @@ void vr_cobotics::keeplisten()
 			// who() is the name of the nng function that produced the error
 			// what() is a description of the error code
 			printf("%s: %s\n", e.who(), e.what());
+			std::cout << "no scene received\n";
+			return;
 		}
-		std::cout << "the number of objects: " << scene.objects_size() << std::endl;
+		//std::cout << "the number of objects: " << scene.objects_size() << std::endl;
 		vec3 minp, maxp, trans;
 		quat rot;
 		rgb clr;
 
-		std::cout << "Received a new Scene!" << std::endl;
 		std::string s;
 		if (google::protobuf::TextFormat::PrintToString(scene, &s)) {
 			std::cout <<  s << std::endl;
@@ -1353,44 +1373,45 @@ void vr_cobotics::keeplisten()
 		for (auto& object : scene.objects())
 		{
 			std::cout << "type: " << object.type() << " name: " << object.id() << std::endl;
-			if (object.type() == 1)
-			{
+			if (object.type() == 0) {
+	
 				minp.x() = -object.size().length() / 2;
 				minp.y() = -object.size().height() / 2;
 				minp.z() = -object.size().width() / 2;
 				maxp.x() = object.size().length() / 2;
 				maxp.y() = object.size().height() / 2;
 				maxp.z() = object.size().width() / 2;
-				movable_boxes.emplace_back(minp, maxp);
-				// exchange y and z, because ros uses a physical coordinate.
-				trans.x() = object.pos().x();
-				trans.y() = object.pos().z();
-				trans.z() = object.pos().y();
-				movable_box_translations.emplace_back(trans);
-				rot.w() = object.orientation().w();
-				rot.x() = object.orientation().x();
-				rot.y() = object.orientation().z();
-				rot.z() = object.orientation().y();
-				movable_box_rotations.emplace_back(rot);
-				clr.R() = object.color().r();
-				clr.G() = object.color().g();
-				clr.B() = object.color().b();
-				movable_box_colors.emplace_back(clr);
-				movable_box_id.emplace_back(object.id());
-				std::cout << object.size().length() << " " << object.size().height() << " " << object.size().width() << " " << object.pos().x() << " " << object.pos().y() << " " << object.pos().z() << " " << object.orientation().w() << " " << object.orientation().x() << " " << object.orientation().y() << " " << object.orientation().z() << std::endl;
+				table_boxes.emplace_back(minp, maxp);
 
+				trans.x() = object.pos().x();
+				trans.y() = object.pos().z();
+				trans.z() = object.pos().y();
+				table_box_translations.emplace_back(trans);
+				rot.w() = object.orientation().w();
+				rot.x() = object.orientation().x();
+				rot.y() = object.orientation().z();
+				rot.z() = object.orientation().y();
+				table_box_rotations.emplace_back(rot);
+				clr.R() = object.color().r();
+				clr.G() = object.color().g();
+				clr.B() = object.color().b();
+				table_box_colors.emplace_back(clr);
+				post_redraw();
 			}
-			else if (object.type() == 2)
-			{
-				/*is_trashbin = true;
-				vec3 pos;
-				pos.x() = object.pos().x();
-				pos.y() = object.pos().z();
-				pos.z() = object.pos().y();*/
-				//construct_trash_bin(0.2f, 0.2f, 0.01f, 0.15f, pos.x(), pos.y() - 0.05, pos.z());
-				vec3 minp, maxp, trans;
-				quat rot;
-				rgb clr;
+			else {
+				if (object.type() == 1)
+				{
+					std::cout << "this is a box" << std::endl;
+				}
+				else if (object.type() == 2)
+				{
+					std::cout << "this is a trash bin" << std::endl;
+				}
+				else if (object.type() == 3)
+				{
+					std::cout << "this is a robot arm" << std::endl;
+					continue;
+				}
 				minp.x() = -object.size().length() / 2;
 				minp.y() = -object.size().height() / 2;
 				minp.z() = -object.size().width() / 2;
@@ -1413,15 +1434,14 @@ void vr_cobotics::keeplisten()
 				clr.B() = object.color().b();
 				movable_box_colors.emplace_back(clr);
 				movable_box_id.emplace_back(object.id());
-				std::cout << "this is trash can" << std::endl;
 				std::cout << object.size().length() << " " << object.size().height() << " " << object.size().width() << " " << object.pos().x() << " " << object.pos().y() << " " << object.pos().z() << " " << object.orientation().w() << " " << object.orientation().x() << " " << object.orientation().y() << " " << object.orientation().z() << std::endl;
-			}
-			else if (object.type() == 3)
-			{
-				std::cout << "this is robot arm" << std::endl;
 			}
 		}
+
 		//save_boxes("boxes", movable_boxes, movable_box_colors, movable_box_translations, movable_box_rotations);
+	}
+	else {
+		std::cout << "no valid scene received\n";
 	}
 }
 

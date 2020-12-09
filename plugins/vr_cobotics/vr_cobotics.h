@@ -59,6 +59,12 @@ protected:
 	std::vector<box3> boxes;
 	std::vector<rgb> box_colors;
 
+	// store the table as table_boxes
+	std::vector<box3> table_boxes;
+	std::vector<vec3> table_box_translations;
+	std::vector<quat> table_box_rotations;
+	std::vector<rgb> table_box_colors;
+
 	// rendering style for boxes
 	cgv::render::box_render_style style;
 
@@ -259,6 +265,7 @@ public:
 	void on_load_wireframe_boxes_cb();
 	void clear_movable_boxes();
 	void clear_frame_boxes();
+	void clear_table_boxes();
 	void on_set_vr_event_streaming_file();
 	void on_send_movable_boxes_id_cb();
 
