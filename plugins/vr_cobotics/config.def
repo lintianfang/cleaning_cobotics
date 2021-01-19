@@ -5,7 +5,7 @@
 name(main):selected="vr_cobotics"
 
 name(vr_cobotics):listen_address="tcp://127.0.0.1:6577"
-name(vr_cobotics):send_address="tcp://141.76.65.58:6576"
+name(vr_cobotics):send_address="tcp://localhost:6576"
 
 type(vr_emulator):current_kit_index=0
 type(vr_emulator):tracker_1_attachment=1
@@ -60,10 +60,10 @@ name(vr interactor):blit_vr_views=false;blit_width=400;blit_aspect_scale=1.3
 //name(vr interactor):calibration_file_path="C:/develop/git/cgv/plugins/vr_test/table.cal"
 
 persistent
-name(vr interactor):tracking_rotation=-95
-name(vr interactor):tracking_origin_x=0.170685;
-name(vr interactor):tracking_origin_y=0.700009;
-name(vr interactor):tracking_origin_z=-0.447587;
-name(vr interactor):tracking_rotation_origin_x=1.1589;
-name(vr interactor):tracking_rotation_origin_y=0.790442;
-name(vr interactor):tracking_rotation_origin_z=-0.327098
+name(vr interactor):tracking_rotation=-5
+name(vr interactor):tracking_origin_x=-0.648926;
+name(vr interactor):tracking_origin_y=0.749997;
+name(vr interactor):tracking_origin_z=-0.758222;
+name(vr interactor):tracking_rotation_origin_x=0.262207;
+name(vr interactor):tracking_rotation_origin_y=0.771873;
+name(vr interactor):tracking_rotation_origin_z=0.6948

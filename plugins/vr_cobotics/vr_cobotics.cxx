@@ -12,7 +12,6 @@
 #include <cgv_gl/sphere_renderer.h>
 #include <cgv/media/mesh/simple_mesh.h>
 #include <cg_vr/vr_events.h>
-
 #include <random>
 #include <sstream>
 
@@ -272,6 +271,7 @@ vr_cobotics::vr_cobotics()
 	box_edit_mode = false;
 	is_nng = true;
 	isconnected = false;
+	islistened = false;
 	for (auto& a : grab_number) a = 0;
 	new_box = box3(vec3(-0.05f), vec3(0.05f));
 	new_box_color = rgb(88.f / 255.f, 24.f / 255.f, 69.f / 255.f);
@@ -339,9 +339,10 @@ void vr_cobotics::on_set(void* member_ptr)
 	
 bool vr_cobotics::handle(cgv::gui::event& e)
 {
-	/*if (isconnected && !box_select_mode && !trash_bin_select_mode) {
+	if (isconnected && islistened && !box_select_mode && !trash_bin_select_mode) {
 		keeplisten();
-	}*/
+		post_redraw();
+	}
 	// check if vr event flag is not set and don't process events in this case
 	if ((e.get_flags() & cgv::gui::EF_VR) == 0)
 		return false;
@@ -395,24 +396,37 @@ bool vr_cobotics::handle(cgv::gui::event& e)
 				return true;
 			}
 			case vr::VR_LEFT_STICK_UP:
-				on_send_movable_boxes_id_cb();
+				buildconnection();
 			case vr::VR_RIGHT_STICK_UP:
 			{
 				return true;
 			}
 			case vr::VR_LEFT_STICK_DOWN:
-				std::cout << "touch pad of left controller pressed at down direction" << std::endl;
+			{
+				std::cout << "trash_bin_select_mode" << std::endl;
+				trash_bin_select_mode = !trash_bin_select_mode;
+				update_member(&trash_bin_select_mode);
+			}
 			case vr::VR_RIGHT_STICK_DOWN:
 			{
 				return true;
 			}
 			case vr::VR_LEFT_STICK_LEFT:
-				std::cout << "touch pad of left controller pressed at left direction" << std::endl;
+				on_start_listen();
 			case vr::VR_RIGHT_STICK_LEFT:
+			{
 				return true;
+			}
 			case vr::VR_RIGHT_STICK_RIGHT:
-			case vr::VR_LEFT_STICK_RIGHT:
+			{
 				return true;
+			}
+			case vr::VR_LEFT_STICK_RIGHT:
+			{
+				std::cout << "box_select_mode" << std::endl;
+				box_select_mode = !box_select_mode;
+				update_member(&box_select_mode);
+			}
 			}
 		}
 		else {
@@ -465,6 +479,7 @@ bool vr_cobotics::handle(cgv::gui::event& e)
 							bi = intersection_box_indices[i];
 						}
 					}
+					std::cout << "the number of intersection box: " << intersection_box_indices.size() << std::endl;
 					send_selection(movable_box_id.at(bi));
 					std::cout << "send a message of box " << bi << std::endl;
 				}
@@ -913,23 +928,26 @@ void vr_cobotics::draw(cgv::render::context& ctx)
 		renderer.disable(ctx);
 	}
 
-	// draw dynamic boxes 
-	renderer.set_render_style(movable_style);
-	renderer.set_box_array(ctx, movable_boxes);
-	renderer.set_color_array(ctx, movable_box_colors);
-	renderer.set_translation_array(ctx, movable_box_translations);
-	renderer.set_rotation_array(ctx, movable_box_rotations);
-	if (renderer.validate_and_enable(ctx)) {
-		if (show_seethrough) {
-			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-			renderer.draw(ctx, 0, 3);
-			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-			renderer.draw(ctx, 3, movable_boxes.size() - 3);
+	// draw dynamic boxes
+	if (movable_boxes.size() > 0)
+	{
+		renderer.set_render_style(movable_style);
+		renderer.set_box_array(ctx, movable_boxes);
+		renderer.set_color_array(ctx, movable_box_colors);
+		renderer.set_translation_array(ctx, movable_box_translations);
+		renderer.set_rotation_array(ctx, movable_box_rotations);
+		if (renderer.validate_and_enable(ctx)) {
+			if (show_seethrough) {
+				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				renderer.draw(ctx, 0, 3);
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+				renderer.draw(ctx, 3, movable_boxes.size() - 3);
+			}
+			else
+				renderer.draw(ctx, 0, movable_boxes.size());
 		}
-		else
-			renderer.draw(ctx, 0, movable_boxes.size());
+		renderer.disable(ctx);
 	}
-	renderer.disable(ctx);
 
 	// draw static boxes
 	renderer.set_render_style(style);
@@ -1027,11 +1045,12 @@ void vr_cobotics::create_gui() {
 	add_decorator("vr_cobotics", "heading", "level=2");
 	if (begin_tree_node("NNG events", is_nng)) {
 		align("\a");
-		add_member_control(this, "listen_address", listen_address);
+		//add_member_control(this, "listen_address", listen_address);
 		add_member_control(this, "send_address", send_address);
 		connect_copy(add_button("build connection")->click, rebind(this, &vr_cobotics::buildconnection));
-		connect_copy(add_button("destroy connection")->click, rebind(this, &vr_cobotics::destroyconnection));
-		connect_copy(add_button("receive")->click, rebind(this, &vr_cobotics::on_send_movable_boxes_id_cb));
+		connect_copy(add_button("release connection")->click, rebind(this, &vr_cobotics::destroyconnection));
+		connect_copy(add_button("start listening")->click, rebind(this, &vr_cobotics::on_start_listen));
+		connect_copy(add_button("stop listening")->click, rebind(this, &vr_cobotics::on_stop_listen));
 		add_member_control(this, "select a box", box_select_mode, "toggle");
 		add_member_control(this, "select a trash bin", trash_bin_select_mode, "toggle");
 		align("\b");
@@ -1112,7 +1131,6 @@ bool vr_cobotics::self_reflect(cgv::reflect::reflection_handler & rh)
 		rh.reflect_member("select a box", box_select_mode) &&
 		rh.reflect_member("select a trash bin", trash_bin_select_mode) &&
 		rh.reflect_member("box_edit_mode", box_edit_mode) &&
-		rh.reflect_member("listen_address", listen_address) &&
 		rh.reflect_member("send_address", send_address);
 }
 
@@ -1250,10 +1268,30 @@ void vr_cobotics::on_set_vr_event_streaming_file()
 	}
 	post_recreate_gui();
 }
-
-void vr_cobotics::on_send_movable_boxes_id_cb()
+/// <summary>
+/// This section is about nng communication
+/// </summary>
+void vr_cobotics::on_start_listen()
 {
+	/*islistened = true;
+	int lastTime = time(0);
+	int thisTime;
+	const int elapsed = 3; // sec
+	while (islistened)
+	{
+		thisTime = time(0);
+		if (thisTime - lastTime > elapsed)
+		{
+			keeplisten();
+			lastTime = thisTime;
+		}
+	}*/
 	keeplisten();
+}
+
+void vr_cobotics::on_stop_listen()
+{
+	islistened = false;
 }
 
 void vr_cobotics::clear_movable_boxes()
@@ -1280,6 +1318,14 @@ void vr_cobotics::clear_table_boxes()
 	table_box_colors.clear();
 }
 
+void vr_cobotics::update_intersections() 
+{
+	intersection_points.clear();
+	intersection_colors.clear();
+	intersection_box_indices.clear();
+	intersection_controller_indices.clear();
+}
+
 Selection vr_cobotics::obtainSelection(std::string box_id)
 {
 	Selection selection;
@@ -1303,6 +1349,7 @@ void vr_cobotics::buildconnection()
 			const char* da = send_address.c_str();
 			soc_pair.dial(da);
 			isconnected = true;
+			islistened = true;
 			std::cout << "build connection successfully!" << std::endl;
 		}
 	}
@@ -1332,6 +1379,8 @@ void vr_cobotics::destroyconnection()
 
 void vr_cobotics::keeplisten()
 {
+	islistened = false;
+	std::cout << "islistened: " << islistened << std::endl;
 	nng::view rep_buf;
 	try {
 		rep_buf = soc_pair.recv(nng::flag::nonblock);
@@ -1339,13 +1388,12 @@ void vr_cobotics::keeplisten()
 	catch (const nng::exception& e) {
 		// who() is the name of the nng function that produced the error
 		// what() is a description of the error code
-		printf("%s: %s\n", e.who(), e.what());
+		//printf("%s: %s\n", e.who(), e.what());
 	}
-
 	// check the content
 	if (rep_buf != "") {
 		std::cout << "Received a new Scene!" << std::endl;
-		clear_movable_boxes();
+		
 		Scene scene;
 		try {
 			scene.ParseFromArray(rep_buf.data(), rep_buf.size());
@@ -1354,95 +1402,82 @@ void vr_cobotics::keeplisten()
 			// who() is the name of the nng function that produced the error
 			// what() is a description of the error code
 			printf("%s: %s\n", e.who(), e.what());
-			std::cout << "no scene received\n";
+			//std::cout << "no scene received\n";
 			return;
 		}
-		//std::cout << "the number of objects: " << scene.objects_size() << std::endl;
+		std::cout << "the number of objects: " << scene.objects_size() << std::endl;
 		vec3 minp, maxp, trans;
 		quat rot;
 		rgb clr;
-
+		// output content of the scene
 		std::string s;
 		if (google::protobuf::TextFormat::PrintToString(scene, &s)) {
 			std::cout <<  s << std::endl;
-		}
-		else {
-			std::cerr << "Scene invalid! partial content: " << scene.ShortDebugString() << std::endl;
-		}
-
-		for (auto& object : scene.objects())
-		{
-			std::cout << "type: " << object.type() << " name: " << object.id() << std::endl;
-			if (object.type() == 0) {
-	
-				minp.x() = -object.size().length() / 2;
-				minp.y() = -object.size().height() / 2;
-				minp.z() = -object.size().width() / 2;
-				maxp.x() = object.size().length() / 2;
-				maxp.y() = object.size().height() / 2;
-				maxp.z() = object.size().width() / 2;
-				table_boxes.emplace_back(minp, maxp);
-
-				trans.x() = object.pos().x();
-				trans.y() = object.pos().z();
-				trans.z() = object.pos().y();
-				table_box_translations.emplace_back(trans);
-				rot.w() = object.orientation().w();
-				rot.x() = object.orientation().x();
-				rot.y() = object.orientation().z();
-				rot.z() = object.orientation().y();
-				table_box_rotations.emplace_back(rot);
-				clr.R() = object.color().r();
-				clr.G() = object.color().g();
-				clr.B() = object.color().b();
-				table_box_colors.emplace_back(clr);
-				post_redraw();
+			if (scene.objects_size() > 0) {
+				clear_movable_boxes();
+				update_intersections();
 			}
-			else {
-				if (object.type() == 1)
-				{
-					std::cout << "this is a box" << std::endl;
-				}
-				else if (object.type() == 2)
-				{
-					std::cout << "this is a trash bin" << std::endl;
-				}
-				else if (object.type() == 3)
-				{
-					std::cout << "this is a robot arm" << std::endl;
-					continue;
-				}
+			for (auto& object : scene.objects())
+			{
+				std::cout << "type: " << object.type() << " name: " << object.id() << std::endl;
 				minp.x() = -object.size().length() / 2;
 				minp.y() = -object.size().height() / 2;
 				minp.z() = -object.size().width() / 2;
 				maxp.x() = object.size().length() / 2;
 				maxp.y() = object.size().height() / 2;
 				maxp.z() = object.size().width() / 2;
-				movable_boxes.emplace_back(minp, maxp);
 				// exchange y and z, because ros uses a physical coordinate.
 				trans.x() = object.pos().x();
 				trans.y() = object.pos().z();
 				trans.z() = object.pos().y();
-				movable_box_translations.emplace_back(trans);
+
 				rot.w() = object.orientation().w();
 				rot.x() = object.orientation().x();
 				rot.y() = object.orientation().z();
 				rot.z() = object.orientation().y();
-				movable_box_rotations.emplace_back(rot);
+
 				clr.R() = object.color().r();
 				clr.G() = object.color().g();
 				clr.B() = object.color().b();
-				movable_box_colors.emplace_back(clr);
-				movable_box_id.emplace_back(object.id());
-				std::cout << object.size().length() << " " << object.size().height() << " " << object.size().width() << " " << object.pos().x() << " " << object.pos().y() << " " << object.pos().z() << " " << object.orientation().w() << " " << object.orientation().x() << " " << object.orientation().y() << " " << object.orientation().z() << std::endl;
+				if (object.type() == 0) {
+					table_boxes.emplace_back(minp, maxp);
+					table_box_translations.emplace_back(trans);
+					table_box_rotations.emplace_back(rot);
+					table_box_colors.emplace_back(clr);
+					post_redraw();
+				}
+				else {
+					if (object.type() == 1)
+					{
+						std::cout << "this is a box" << std::endl;
+					}
+					else if (object.type() == 2)
+					{
+						std::cout << "this is a trash bin" << std::endl;
+					}
+					else if (object.type() == 3)
+					{
+						std::cout << "this is a robot arm" << std::endl;
+						continue;
+					}
+					movable_boxes.emplace_back(minp, maxp);
+					movable_box_translations.emplace_back(trans);
+					movable_box_rotations.emplace_back(rot);
+					movable_box_colors.emplace_back(clr);
+					movable_box_id.emplace_back(object.id());
+					post_redraw();
+					//std::cout << object.size().length() << " " << object.size().height() << " " << object.size().width() << " " << object.pos().x() << " " << object.pos().y() << " " << object.pos().z() << " " << object.orientation().w() << " " << object.orientation().x() << " " << object.orientation().y() << " " << object.orientation().z() << std::endl;
+				}
 			}
 		}
-
-		//save_boxes("boxes", movable_boxes, movable_box_colors, movable_box_translations, movable_box_rotations);
+		else {
+			std::cerr << "Scene invalid! partial content: " << scene.ShortDebugString() << std::endl;
+		}
 	}
 	else {
 		std::cout << "no valid scene received\n";
 	}
+	islistened = true;
 }
 
 void vr_cobotics::send_selection(std::string box_id)

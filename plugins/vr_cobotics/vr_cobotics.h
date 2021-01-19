@@ -198,6 +198,7 @@ public:
 
 	nng::socket soc_pair;
 	bool isconnected;
+	bool islistened;
 
 	/// compute intersection points of controller ray with movable boxes
 	void compute_intersections(const vec3& origin, const vec3& direction, int ci, const rgb& color);
@@ -266,8 +267,10 @@ public:
 	void clear_movable_boxes();
 	void clear_frame_boxes();
 	void clear_table_boxes();
+	void update_intersections();
 	void on_set_vr_event_streaming_file();
-	void on_send_movable_boxes_id_cb();
+	void on_start_listen();
+	void on_stop_listen();
 
 	void change_box_extents(Axis axis,int ci);
 	void delete_box(int bi);
