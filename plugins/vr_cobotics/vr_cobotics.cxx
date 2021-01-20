@@ -500,8 +500,8 @@ bool vr_cobotics::handle(cgv::gui::event& e)
 						}
 					}
 					send_selection(movable_box_id.at(bi));
+					std::cout << "send a message about trash bin!" << bi << std::endl;
 				}
-				std::cout << "send a message about trash bin!" << std::endl;
 			}
 		}
 		return true;
@@ -1300,6 +1300,7 @@ void vr_cobotics::clear_movable_boxes()
 	movable_box_translations.clear();
 	movable_box_rotations.clear();
 	movable_box_colors.clear();
+	movable_box_id.clear();
 }
 
 void vr_cobotics::clear_frame_boxes()
@@ -1380,7 +1381,7 @@ void vr_cobotics::destroyconnection()
 void vr_cobotics::keeplisten()
 {
 	islistened = false;
-	std::cout << "islistened: " << islistened << std::endl;
+	//std::cout << "islistened: " << islistened << std::endl;
 	nng::view rep_buf;
 	try {
 		rep_buf = soc_pair.recv(nng::flag::nonblock);
@@ -1391,8 +1392,8 @@ void vr_cobotics::keeplisten()
 		//printf("%s: %s\n", e.who(), e.what());
 	}
 	// check the content
-	if (rep_buf != "") {
-		std::cout << "Received a new Scene!" << std::endl;
+	if (rep_buf.size()>0) {
+		//std::cout << "Received a new Scene!" << std::endl;
 		
 		Scene scene;
 		try {
@@ -1401,7 +1402,7 @@ void vr_cobotics::keeplisten()
 		catch (const nng::exception& e) {
 			// who() is the name of the nng function that produced the error
 			// what() is a description of the error code
-			printf("%s: %s\n", e.who(), e.what());
+			//printf("%s: %s\n", e.who(), e.what());
 			//std::cout << "no scene received\n";
 			return;
 		}
@@ -1417,6 +1418,7 @@ void vr_cobotics::keeplisten()
 				clear_movable_boxes();
 				update_intersections();
 			}
+			std::cout << "n of movable: " << movable_boxes.size() << std::endl;
 			for (auto& object : scene.objects())
 			{
 				std::cout << "type: " << object.type() << " name: " << object.id() << std::endl;
