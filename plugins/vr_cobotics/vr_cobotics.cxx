@@ -399,33 +399,51 @@ bool vr_cobotics::handle(cgv::gui::event& e)
 				buildconnection();
 			case vr::VR_RIGHT_STICK_UP:
 			{
-				return true;
+				buildconnection();
 			}
 			case vr::VR_LEFT_STICK_DOWN:
 			{
-				std::cout << "trash_bin_select_mode" << std::endl;
+				/*std::cout << "trash_bin_select_mode" << std::endl;
 				trash_bin_select_mode = !trash_bin_select_mode;
-				update_member(&trash_bin_select_mode);
+				update_member(&trash_bin_select_mode);*/
 			}
 			case vr::VR_RIGHT_STICK_DOWN:
 			{
-				return true;
+				/*std::cout << "trash_bin_select_mode" << std::endl;
+				trash_bin_select_mode = !trash_bin_select_mode;
+				update_member(&trash_bin_select_mode);*/
 			}
 			case vr::VR_LEFT_STICK_LEFT:
-				on_start_listen();
+			{
+				return true;
+			}
 			case vr::VR_RIGHT_STICK_LEFT:
 			{
 				return true;
 			}
 			case vr::VR_RIGHT_STICK_RIGHT:
 			{
-				return true;
+				std::cout << "box_select_mode" << std::endl;
+				box_select_mode = !box_select_mode;
+				update_member(&box_select_mode);
 			}
 			case vr::VR_LEFT_STICK_RIGHT:
 			{
 				std::cout << "box_select_mode" << std::endl;
 				box_select_mode = !box_select_mode;
 				update_member(&box_select_mode);
+			}
+			case vr::VR_LEFT_MENU:
+			{
+				std::cout << "trash_bin_select_mode" << std::endl;
+				trash_bin_select_mode = !trash_bin_select_mode;
+				update_member(&trash_bin_select_mode);
+			}
+			case vr::VR_RIGHT_MENU:
+			{
+				std::cout << "trash_bin_select_mode" << std::endl;
+				trash_bin_select_mode = !trash_bin_select_mode;
+				update_member(&trash_bin_select_mode);
 			}
 			}
 		}
@@ -762,6 +780,14 @@ void vr_cobotics::init_frame(cgv::render::context& ctx)
 				ctx.output_stream() << "set as box template[Grip Button]\n";
 				ctx.output_stream() << "delete box[trackpad up]\n";
 				ctx.output_stream() << "change box extents[trackpad left,right,down]\n";
+			}
+
+			if (box_select_mode) {
+				ctx.output_stream() << "selecting a box" << '\n';
+			}
+
+			if (trash_bin_select_mode) {
+				ctx.output_stream() << "selecting a trash bin" << '\n';
 			}
 			
 			for (size_t i = 0; i < intersection_points.size(); ++i) {
@@ -1382,7 +1408,8 @@ void vr_cobotics::keeplisten()
 {
 	islistened = false;
 	//std::cout << "islistened: " << islistened << std::endl;
-	nng::view rep_buf;
+	//nng::view rep_buf;
+	nng::buffer rep_buf;
 	try {
 		rep_buf = soc_pair.recv(nng::flag::nonblock);
 	}
@@ -1392,21 +1419,22 @@ void vr_cobotics::keeplisten()
 		//printf("%s: %s\n", e.who(), e.what());
 	}
 	// check the content
+	//std::cout << "the size of received buffer: " << rep_buf.size() << std::endl;
 	if (rep_buf.size()>0) {
-		//std::cout << "Received a new Scene!" << std::endl;
-		
+		//std::cout << "Received a new Scene!" << rep_buf.data() << std::endl;
 		Scene scene;
 		try {
 			scene.ParseFromArray(rep_buf.data(), rep_buf.size());
+			//std::cout << "the number of objects: " << scene.ShortDebugString() << std::endl;
 		}
 		catch (const nng::exception& e) {
 			// who() is the name of the nng function that produced the error
 			// what() is a description of the error code
-			//printf("%s: %s\n", e.who(), e.what());
+			printf("%s: %s\n", e.who(), e.what());
 			//std::cout << "no scene received\n";
 			return;
 		}
-		std::cout << "the number of objects: " << scene.objects_size() << std::endl;
+		//std::cout << "the number of objects: " << scene.objects_size() << std::endl;
 		vec3 minp, maxp, trans;
 		quat rot;
 		rgb clr;
@@ -1431,7 +1459,7 @@ void vr_cobotics::keeplisten()
 				// exchange y and z, because ros uses a physical coordinate.
 				trans.x() = object.pos().x();
 				trans.y() = object.pos().z();
-				trans.z() = object.pos().y();
+				trans.z() = -1.f * object.pos().y();
 
 				rot.w() = object.orientation().w();
 				rot.x() = object.orientation().x();
@@ -1477,7 +1505,7 @@ void vr_cobotics::keeplisten()
 		}
 	}
 	else {
-		std::cout << "no valid scene received\n";
+		//std::cout << "no valid scene received\n";
 	}
 	islistened = true;
 }
